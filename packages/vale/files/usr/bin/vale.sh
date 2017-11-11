@@ -80,7 +80,7 @@ if [ "$action" == "auth_voucher" ] ; then
         fi
       else
         vale_time=$(vale "$client_mac" "$voucher")
-        echo ${vale_time:-0} 102400 102400
+        echo ${vale_time:-0} "$vale_limit_down" "$vale_limit_up"
       fi
     fi
   fi
