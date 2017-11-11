@@ -43,7 +43,7 @@ vale() { client_mac="$1" ; voucher="$2"
       vale_remaining_secs="$(($vale_expire_epoch - $now_epoch))"
     #voucher jah usado
     else
-      #criar arquivo para armazenar informacao de que não foi encontrado para www/cgi-bin/vale 
+      #criar arquivo para armazenar informacao de que já foi usado para www/cgi-bin/vale 
       echo "$voucher,used" > /etc/nodogsplash/vale/"$client_mac.info"
     fi
   #voucher não encontrado
