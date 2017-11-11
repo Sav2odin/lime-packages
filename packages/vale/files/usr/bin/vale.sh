@@ -87,6 +87,6 @@ if [ "$action" == "auth_voucher" ] ; then
 
 elif [ "$action" == "auth_status" ] ; then
   if [ "$vale_remaining_secs" -gt "$warn_before_secs" ] ; then
-    echo "$vale_remaining_secs" 102400 102400
+    echo "$vale_remaining_secs" "$vale_limit_down" "$vale_limit_up"
   fi
 fi
