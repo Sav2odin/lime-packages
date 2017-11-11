@@ -4,6 +4,9 @@ action="$1"
 client_mac="${2:-unknown_mac}"
 voucher="$3"
 
+vale_limit_down = 400 #kbps
+vale_limit_up = 100 #kbps
+
 free_keyword=JustForToday
 free_secs=108000 #seconds = 30 hours
 free_limit_down=512 #kbps
@@ -11,6 +14,7 @@ free_limit_up=128 #kbps
 vale_blacklist=/etc/nodogsplash/vale/blacklist_$(date +%Y%m).log
 vale_db=/etc/nodogsplash/vale/db.csv
 vale_secs=2592000 #seconds = 30 days
+warn_before_secs=216000 #seconds = 60 hours
 
 now_epoch="$(date +%s)"
 free_first_use_epoch="$(cat "$vale_blacklist" | grep "$client_mac" | cut -d ' ' -f 1 | head -n 1)"
@@ -24,22 +28,28 @@ tolower() {
   echo "$@" | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz
 }
 
-vale() { client_mac="$1" ; voucher="$2"
+vale() { client_mac="$1" ; voucher="$2" 
+  # se ha variavel voucher, coloque a linha do voucher na var vale_row
   [ -n "$voucher" ] && vale_row="$(cut -d , -f 2- "$vale_db" | egrep -i "^${voucher},")"
+  #se ha variavel vale row
   if [ -n "$vale_row" ] ; then
+    #se a linha do voucher estiver vazia
     if echo "$vale_row" | grep -iq "^${voucher},,$" ; then
       vale_used_epoch=$now_epoch
       vale_used_macs=$client_mac
-    elif echo "$vale_row" | grep -iq "^${voucher}," ; then
-      vale_used_epoch="$(grep -i "$voucher" "$vale_db" | cut -d , -f 3)"
-      vale_used_macs="$(grep -i "$voucher" "$vale_db" | cut -d , -f 4)"
-      if ! (echo $vale_used_macs | grep -q $client_mac) ; then
-        vale_used_macs="$vale_used_macs+$client_mac"
-      fi
+
+      vale_expire_epoch="$(($vale_used_epoch + $vale_secs))"
+      sed -i "s/,$voucher,.*$/,$voucher,$vale_used_epoch,$vale_used_macs/i" "$vale_db"
+      vale_remaining_secs="$(($vale_expire_epoch - $now_epoch))"
+    #voucher jah usado
+    else
+      #criar arquivo para armazenar informacao de que não foi encontrado para www/cgi-bin/vale 
+      echo "$voucher,used" > /etc/nodogsplash/vale/"$client_mac.info"
     fi
-    vale_expire_epoch="$(($vale_used_epoch + $vale_secs))"
-    sed -i "s/$voucher.*$/$voucher,$vale_used_epoch,$vale_used_macs/i" "$vale_db"
-    vale_remaining_secs="$(($vale_expire_epoch - $now_epoch))"
+  #voucher não encontrado
+  else
+    #criar arquivo para armazenar informacao de que não foi encontrado para www/cgi-bin/vale 
+    echo "$voucher,notfound" > /etc/nodogsplash/vale/"$client_mac.info"
   fi
 
   [ "$vale_remaining_secs" -lt 0 ] && vale_remaining_secs=0
@@ -56,7 +66,7 @@ voucher="$(tolower "$voucher" | tr -c -d abcdefghijklmnopqrstuvwxyz1234567890)"
 if [ "$action" == "auth_voucher" ] ; then
 
   if [ "$vale_remaining_secs" -gt 0 ] ; then
-    echo "$vale_remaining_secs" 102400 102400
+    echo "$vale_remaining_secs" "$vale_limit_down" "$vale_limit_up"
   else
     if [ "$free_remaining_secs" -gt 0 ] ; then
       echo "$free_remaining_secs" "$free_limit_down" "$free_limit_up"
@@ -76,6 +86,7 @@ if [ "$action" == "auth_voucher" ] ; then
   fi
 
 elif [ "$action" == "auth_status" ] ; then
-  # do nothing, captive portal should be seen once a day minimum
-  true
+  if [ "$vale_remaining_secs" -gt "$warn_before_secs" ] ; then
+    echo "$vale_remaining_secs" 102400 102400
+  fi
 fi
