@@ -16,6 +16,11 @@ vale_db=/etc/nodogsplash/vale/db.csv
 vale_secs=2592000 #seconds = 30 days
 warn_before_secs=216000 #seconds = 60 hours
 
+#if vale blacklist for this month doesn't exist, create it
+if [ ! -f "$vale_blacklist" ]; then
+    touch  "$vale_blacklist"
+fi
+
 now_epoch="$(date +%s)"
 free_first_use_epoch="$(cat "$vale_blacklist" | grep "$client_mac" | cut -d ' ' -f 1 | head -n 1)"
 free_expire_epoch="$(($free_first_use_epoch + $free_secs))"
