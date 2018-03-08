@@ -4,8 +4,8 @@ action="$1"
 client_mac="${2:-unknown_mac}"
 voucher="$3"
 
-vale_limit_down = 400 #kbps
-vale_limit_up = 100 #kbps
+vale_limit_down=400 #kbps
+vale_limit_up=100 #kbps
 
 free_keyword=JustForToday
 free_secs=108000 #seconds = 30 hours
