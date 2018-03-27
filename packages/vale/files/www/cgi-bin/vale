@@ -22,26 +22,37 @@ if [ -n "$status" ] ; then
 fi
 
 if echo "$status" | grep -q "notfound" ; then
+  #message="Invalid voucher. Try again."
   message="Código inválido. Digite novamente."
 else
   if echo "$status" | grep -q "used" ; then
+    #message="This voucher was already used. Each voucher can only be used in one device."
     message="Código já usado. Cada código só pode ser usado em um aparelho."
   else
 
     if [ "$vale_expire_epoch" -gt "$now_epoch" ] ; then
+      #message="Your voucher is still valed until  $(date +'<b>%F</b> at %T' -d @$vale_expire_epoch)"
       message="Seu código ainda é válido até $(date +'<b>%F</b> at %T' -d @$vale_expire_epoch)"
+      #message="$message<br>Hit OK (no need to fill out)."
       message="$message<br>Clique OK (não precisa preencher)."
     else
+      #message="This device has no voucher"
       message="Esse dispositivo não tem código."
       if [ -n "$free_first_use_epoch" ] ; then
+            #message="$message<br>You have already used <em>$free_keyword</em> free voucher this month"
 	    message="$message<br>Você já usou o <em>$free_keyword</em> código grátis esse mês"
 	    message="$message<br>$(date +'on date %F at %T' -d @$free_first_use_epoch)."
 	    if [ "$free_remaining_secs" -gt 0 ] ; then
+	      #message="$message<br>You can still surf the net for <b>$(($free_remaining_secs/3600)) hours</b>"
 	      message="$message<br>Você ainda pode navegar por <b>$(($free_remaining_secs/3600)) horas</b>"
-	      message="$message<br>(até $(date +'%F at %T' -d @$free_expire_epoch))."
-	      message="$message<br>Clique OK (não precisa preencher)."
+	      #message="$message<br>(until $(date +'%F at %T' -d @$free_expire_epoch))."
+	      message="$message<br>(até $(date +'%F as %T' -d @$free_expire_epoch))."
+	      #message="$message<br>Hit OK (no need to fill out)."
+      	      message="$message<br>Clique OK (não precisa preencher)."
 	    else
+	      #message="$message<br>You need a voucher"
 	      message="$message<br>Você precisa conseguir um código de acesso"
+	      #message="$message<br><b>Surfing disabled until you get one</b>."
 	      message="$message<br><b>Navegação bloqueada até obtenção do código</b>."
 	    fi
       #else
